@@ -48,7 +48,7 @@ export default function Menu() {
         <>
             <header className="page-title-bar">
                 <div className="container">
-                    <h1>Our <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Menu</em></h1>
+                    <h1>Our <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Menu</em></h1>
                     <p>Crafted with passion, served with love.</p>
                 </div>
             </header>
@@ -92,10 +92,10 @@ export default function Menu() {
                     ) : filtered.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: 80, color: 'var(--text-muted)' }}>
                             <i className="fas fa-utensils" style={{ fontSize: 48, marginBottom: 16, color: 'var(--text-dim)' }}></i>
-                            <p style={{ fontSize: 17, fontWeight: 600 }}>
+                            <p style={{ fontSize: 18, fontWeight: 600 }}>
                                 {search ? 'No matches found' : 'No items in this category'}
                             </p>
-                            <span style={{ fontSize: 14 }}>
+                            <span style={{ fontSize: 15 }}>
                                 {search ? 'Try a different search term.' : 'Try a different category, or start the backend & run seed.'}
                             </span>
                         </div>

@@ -5,7 +5,7 @@ export default function About() {
         <>
             <header className="page-title-bar">
                 <div className="container">
-                    <h1>Our <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Story</em></h1>
+                    <h1>Our <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Story</em></h1>
                     <p>From Naples to your plate — a decade of fire and flavor.</p>
                 </div>
             </header>

@@ -5,7 +5,9 @@ const CartContext = createContext(null);
 export function CartProvider({ children }) {
     const [items, setItems] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem('cart') || '[]');
+            const saved = JSON.parse(localStorage.getItem('cart') || '[]');
+            // Custom pizzas saved by the old version have no options, so the server can't price them.
+            return saved.filter((i) => !String(i._id).startsWith('custom-') || i.custom);
         } catch { return []; }
     });
     const [open, setOpen] = useState(false);

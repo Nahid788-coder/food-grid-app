@@ -215,7 +215,7 @@ const COUNTRIES = [
 ];
 
 const flagUrl = (iso) => `https://flagcdn.com/w40/${iso}.png`;
-const DEFAULT_COUNTRY = COUNTRIES.find((c) => c.iso === 'us');
+const DEFAULT_COUNTRY = COUNTRIES.find((c) => c.iso === 'in');
 
 export default function PhoneInput({ value = '', onChange, required, name = 'phone' }) {
     const parseInitial = () => {
@@ -288,9 +288,9 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                         gap: 9,
                         padding: '0 14px',
                         borderRight: '1px solid var(--border)',
-                        background: 'rgba(255,255,255,0.04)',
+                        background: 'rgba(var(--ink-rgb), 0.04)',
                         color: 'var(--text)',
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: 500,
                         whiteSpace: 'nowrap',
                         cursor: 'pointer',
@@ -305,7 +305,7 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                         style={{ borderRadius: 2, display: 'block', objectFit: 'cover' }}
                     />
                     <span style={{ lineHeight: 1 }}>{country.code}</span>
-                    <i className="fas fa-chevron-down" style={{ fontSize: 9, opacity: 0.55, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}></i>
+                    <i className="fas fa-chevron-down" style={{ fontSize: 12, opacity: 0.55, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}></i>
                 </button>
                 <input
                     type="tel"
@@ -324,7 +324,7 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                         background: 'transparent',
                         padding: '0 16px',
                         outline: 'none',
-                        fontSize: 14.5,
+                        fontSize: 15,
                         color: 'var(--text)',
                         fontFamily: 'inherit',
                         height: '100%',
@@ -334,7 +334,7 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
             </div>
 
             {!isValid && (
-                <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <p style={{ fontSize: 13, color: 'var(--danger)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <i className="fas fa-circle-exclamation"></i>
                     Enter exactly {country.len} digits for {country.name}
                 </p>
@@ -346,10 +346,10 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                     top: 'calc(100% + 6px)',
                     left: 0,
                     right: 0,
-                    background: 'var(--bg-3, #1a1a24)',
+                    background: 'var(--surface)',
                     border: '1px solid var(--border)',
                     borderRadius: 'var(--radius)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
+                    boxShadow: '0 12px 40px rgba(59,42,32,0.18)',
                     maxHeight: 360,
                     overflow: 'hidden',
                     display: 'flex',
@@ -363,12 +363,12 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search 200+ countries..."
                             autoFocus
-                            style={{ padding: '8px 12px', fontSize: 13.5 }}
+                            style={{ padding: '8px 12px', fontSize: 14 }}
                         />
                     </div>
                     <div style={{ overflowY: 'auto', flex: 1 }}>
                         {filtered.length === 0 && (
-                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
                                 No country found
                             </div>
                         )}
@@ -386,14 +386,14 @@ export default function PhoneInput({ value = '', onChange, required, name = 'pho
                                         alignItems: 'center',
                                         gap: 12,
                                         padding: '10px 14px',
-                                        background: active ? 'rgba(255,107,53,0.12)' : 'transparent',
+                                        background: active ? 'rgba(var(--primary-rgb), 0.12)' : 'transparent',
                                         color: 'var(--text)',
-                                        fontSize: 13.5,
+                                        fontSize: 14,
                                         textAlign: 'left',
                                         borderBottom: '1px solid var(--border)',
                                         cursor: 'pointer',
                                     }}
-                                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(var(--ink-rgb), 0.04)'; }}
                                     onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
                                 >
                                     <img

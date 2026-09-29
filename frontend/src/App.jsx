@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
@@ -6,20 +6,21 @@ import CartDrawer from './components/CartDrawer.jsx';
 import ScrollProgress from './components/ScrollProgress.jsx';
 import BackToTop from './components/BackToTop.jsx';
 import PageLoader from './components/PageLoader.jsx';
-import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 import Home from './pages/Home.jsx';
-import Menu from './pages/Menu.jsx';
-import About from './pages/About.jsx';
-import Booking from './pages/Booking.jsx';
-import Contact from './pages/Contact.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import Checkout from './pages/Checkout.jsx';
-import Orders from './pages/Orders.jsx';
-import Admin from './pages/Admin.jsx';
-import Customizer from './pages/Customizer.jsx';
-import OrderTrack from './pages/OrderTrack.jsx';
+
+// Everything except the landing page loads on demand, so the first visit is fast.
+const Menu = lazy(() => import('./pages/Menu.jsx'));
+const About = lazy(() => import('./pages/About.jsx'));
+const Booking = lazy(() => import('./pages/Booking.jsx'));
+const Contact = lazy(() => import('./pages/Contact.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const Checkout = lazy(() => import('./pages/Checkout.jsx'));
+const Orders = lazy(() => import('./pages/Orders.jsx'));
+const Admin = lazy(() => import('./pages/Admin.jsx'));
+const Customizer = lazy(() => import('./pages/Customizer.jsx'));
+const OrderTrack = lazy(() => import('./pages/OrderTrack.jsx'));
 import { useAuth } from './context/AuthContext.jsx';
 
 function ProtectedRoute({ children, adminOnly }) {
@@ -50,6 +51,7 @@ export default function App() {
             <ScrollProgress />
             <Navbar />
             <main>
+                <Suspense fallback={<div className="route-loading"><i className="fas fa-pizza-slice fa-spin"></i></div>}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/menu" element={<Menu />} />
@@ -79,10 +81,10 @@ export default function App() {
                     />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
             </main>
             <Footer />
             <CartDrawer />
-            {/* <WhatsAppButton /> */}
             <BackToTop />
         </>
     );

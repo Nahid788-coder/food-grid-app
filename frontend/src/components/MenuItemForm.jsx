@@ -136,13 +136,13 @@ export default function MenuItemForm({ item, onSaved, onClose }) {
                     </div>
 
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
                             <input type="checkbox" name="isVeg" checked={form.isVeg} onChange={onChange} style={{ width: 'auto' }} /> Veg
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
                             <input type="checkbox" name="isSpicy" checked={form.isSpicy} onChange={onChange} style={{ width: 'auto' }} /> Spicy
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
                             <input type="checkbox" name="isFeatured" checked={form.isFeatured} onChange={onChange} style={{ width: 'auto' }} /> Featured
                         </label>
                     </div>

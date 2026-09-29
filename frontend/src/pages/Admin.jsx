@@ -13,7 +13,10 @@ const STATUS_FLOW = {
     booking: ['pending', 'confirmed', 'completed', 'cancelled'],
 };
 
-const PIE_COLORS = ['#ff6b35', '#ffb627', '#43e97b', '#6c63ff', '#ff4757', '#9b59b6'];
+// Espresso Cream palette (SVG attributes need real hex values, not CSS vars)
+const C = { primary: '#C8452C', accent: '#E9A23B', basil: '#5B8C4A', info: '#4F6FA8', cocoa: '#8A5A3C', plum: '#8E5A7B', muted: '#8A7462', grid: 'rgba(59,42,32,0.08)' };
+const PIE_COLORS = [C.primary, C.accent, C.basil, C.info, C.cocoa, C.plum];
+const TOOLTIP = { background: '#FFFFFF', border: '1px solid #EADFCF', borderRadius: 10, color: '#3B2A20', boxShadow: '0 10px 30px -12px rgba(59,42,32,0.25)' };
 
 export default function Admin() {
     const [tab, setTab] = useState('overview');
@@ -53,8 +56,10 @@ export default function Admin() {
     }, []);
 
     useEffect(() => {
-        if (!socket.connected) socket.connect();
-        socket.emit('admin-join');
+        const join = () => socket.emit('admin-join', localStorage.getItem('token'));
+        socket.on('connect', join);
+        if (socket.connected) join();
+        else socket.connect();
         const onNew = (order) => {
             setOrders((prev) => [order, ...prev]);
             toast.success(`🔔 New order from ${order.customerName}`);
@@ -67,6 +72,7 @@ export default function Admin() {
         socket.on('new-order', onNew);
         socket.on('order-updated', onUpd);
         return () => {
+            socket.off('connect', join);
             socket.off('new-order', onNew);
             socket.off('order-updated', onUpd);
         };
@@ -126,7 +132,7 @@ export default function Admin() {
         <section className="admin-page">
             <div className="container">
                 <h1 style={{ fontSize: 36, marginBottom: 8 }}>
-                    Admin <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Dashboard</em>
+                    Admin <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Dashboard</em>
                 </h1>
                 <p style={{ color: 'var(--text-muted)', marginBottom: 30 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -154,12 +160,12 @@ export default function Admin() {
                     <>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18, marginBottom: 36 }}>
                             {[
-                                { l: 'Total Revenue', v: `₹${(totals.revenue || 0).toLocaleString()}`, i: 'fas fa-indian-rupee-sign', c: '#43e97b' },
-                                { l: 'Today\'s Revenue', v: `₹${(totals.todayRevenue || 0).toLocaleString()}`, i: 'fas fa-chart-line', c: '#ff6b35' },
-                                { l: 'Today\'s Orders', v: totals.todayOrders ?? 0, i: 'fas fa-bag-shopping', c: '#ffb627' },
-                                { l: 'Total Orders', v: totals.orders ?? 0, i: 'fas fa-receipt', c: '#6c63ff' },
-                                { l: 'Bookings', v: totals.bookings ?? 0, i: 'far fa-calendar-check', c: '#9b59b6' },
-                                { l: 'Menu Items', v: totals.menuItems ?? 0, i: 'fas fa-utensils', c: '#e74c3c' },
+                                { l: 'Delivered Revenue', v: `₹${(totals.revenue || 0).toLocaleString()}`, i: 'fas fa-indian-rupee-sign', c: C.basil },
+                                { l: 'Today\'s Revenue', v: `₹${(totals.todayRevenue || 0).toLocaleString()}`, i: 'fas fa-chart-line', c: C.primary },
+                                { l: 'Today\'s Orders', v: totals.todayOrders ?? 0, i: 'fas fa-bag-shopping', c: C.accent },
+                                { l: 'Total Orders', v: totals.orders ?? 0, i: 'fas fa-receipt', c: C.info },
+                                { l: 'Bookings', v: totals.bookings ?? 0, i: 'far fa-calendar-check', c: C.plum },
+                                { l: 'Menu Items', v: totals.menuItems ?? 0, i: 'fas fa-utensils', c: C.primary },
                             ].map((s, i) => (
                                 <div key={i} className="stat-card" style={{
                                     background: 'var(--bg-2)',
@@ -178,8 +184,8 @@ export default function Admin() {
                                         <i className={s.i}></i>
                                     </div>
                                     <div>
-                                        <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, fontWeight: 700 }}>{s.v}</div>
-                                        <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{s.l}</div>
+                                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700 }}>{s.v}</div>
+                                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s.l}</div>
                                     </div>
                                 </div>
                             ))}
@@ -187,41 +193,41 @@ export default function Admin() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18, marginBottom: 18 }}>
                             <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 }}>
-                                <h4 style={{ marginBottom: 14, fontFamily: 'Outfit, sans-serif', fontSize: 16 }}>Revenue — Last 7 Days</h4>
+                                <h4 style={{ marginBottom: 14, fontFamily: 'var(--font-body)', fontSize: 16 }}>Revenue — Last 7 Days</h4>
                                 <ResponsiveContainer width="100%" height={260}>
                                     <LineChart data={stats?.weekly || []}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                        <XAxis dataKey="day" stroke="#9999a8" fontSize={12} />
-                                        <YAxis stroke="#9999a8" fontSize={12} />
-                                        <Tooltip contentStyle={{ background: '#14141d', border: '1px solid #1f1f2c', borderRadius: 8 }} />
-                                        <Line type="monotone" dataKey="revenue" stroke="#ff6b35" strokeWidth={2.5} dot={{ fill: '#ff6b35', r: 4 }} activeDot={{ r: 6 }} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+                                        <XAxis dataKey="day" stroke={C.muted} fontSize={12} />
+                                        <YAxis stroke={C.muted} fontSize={12} />
+                                        <Tooltip contentStyle={TOOLTIP} />
+                                        <Line type="monotone" dataKey="revenue" stroke={C.primary} strokeWidth={2.5} dot={{ fill: C.primary, r: 4 }} activeDot={{ r: 6 }} />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
 
                             <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 }}>
-                                <h4 style={{ marginBottom: 14, fontFamily: 'Outfit, sans-serif', fontSize: 16 }}>Order Status</h4>
+                                <h4 style={{ marginBottom: 14, fontFamily: 'var(--font-body)', fontSize: 16 }}>Order Status</h4>
                                 <ResponsiveContainer width="100%" height={260}>
                                     <PieChart>
                                         <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3}>
                                             {statusPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                                         </Pie>
-                                        <Tooltip contentStyle={{ background: '#14141d', border: '1px solid #1f1f2c', borderRadius: 8 }} />
-                                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                                        <Tooltip contentStyle={TOOLTIP} />
+                                        <Legend wrapperStyle={{ fontSize: 13 }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
                         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 }}>
-                            <h4 style={{ marginBottom: 14, fontFamily: 'Outfit, sans-serif', fontSize: 16 }}>Top Selling Items</h4>
+                            <h4 style={{ marginBottom: 14, fontFamily: 'var(--font-body)', fontSize: 16 }}>Top Selling Items</h4>
                             <ResponsiveContainer width="100%" height={260}>
                                 <BarChart data={stats?.topItems || []} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                    <XAxis type="number" stroke="#9999a8" fontSize={12} />
-                                    <YAxis type="category" dataKey="name" stroke="#9999a8" fontSize={12} width={140} />
-                                    <Tooltip contentStyle={{ background: '#14141d', border: '1px solid #1f1f2c', borderRadius: 8 }} />
-                                    <Bar dataKey="sold" fill="#ffb627" radius={[0, 8, 8, 0]} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+                                    <XAxis type="number" stroke={C.muted} fontSize={12} />
+                                    <YAxis type="category" dataKey="name" stroke={C.muted} fontSize={12} width={140} />
+                                    <Tooltip contentStyle={TOOLTIP} />
+                                    <Bar dataKey="sold" fill={C.accent} radius={[0, 8, 8, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -238,19 +244,19 @@ export default function Admin() {
                                 {orders.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No orders yet</td></tr>}
                                 {orders.map((o) => (
                                     <tr key={o._id}>
-                                        <td style={{ fontFamily: 'monospace', fontSize: 13 }}>#{o._id.slice(-6).toUpperCase()}</td>
+                                        <td style={{ fontFamily: 'monospace', fontSize: 14 }}>#{o._id.slice(-6).toUpperCase()}</td>
                                         <td>
                                             <div>{o.customerName}</div>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.customerPhone}</div>
+                                            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{o.customerPhone}</div>
                                         </td>
-                                        <td style={{ fontSize: 13 }}>{o.items.length} items</td>
+                                        <td style={{ fontSize: 14 }}>{o.items.length} items</td>
                                         <td style={{ fontWeight: 700, color: 'var(--primary)' }}>₹{o.total}</td>
-                                        <td style={{ textTransform: 'uppercase', fontSize: 11.5, fontWeight: 600 }}>
+                                        <td style={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
                                             {o.paymentMethod}
-                                            <div style={{ fontSize: 10, color: o.paymentStatus === 'paid' ? 'var(--success)' : 'var(--accent)' }}>{o.paymentStatus}</div>
+                                            <div style={{ fontSize: 12, color: o.paymentStatus === 'paid' ? 'var(--success)' : 'var(--accent)' }}>{o.paymentStatus}</div>
                                         </td>
                                         <td>
-                                            <select value={o.status} onChange={(e) => updateOrderStatus(o._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 12.5, width: 'auto' }}>
+                                            <select value={o.status} onChange={(e) => updateOrderStatus(o._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
                                                 {STATUS_FLOW.order.map((s) => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
@@ -277,7 +283,7 @@ export default function Admin() {
                                         <td>{b.time}</td>
                                         <td>{b.guests}</td>
                                         <td>
-                                            <select value={b.status} onChange={(e) => updateBookingStatus(b._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 12.5, width: 'auto' }}>
+                                            <select value={b.status} onChange={(e) => updateBookingStatus(b._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
                                                 {STATUS_FLOW.booking.map((s) => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
@@ -308,16 +314,16 @@ export default function Admin() {
                                             <td style={{ textTransform: 'capitalize' }}>{m.category}</td>
                                             <td style={{ fontWeight: 700, color: 'var(--primary)' }}>₹{m.price}</td>
                                             <td>★ {m.rating?.toFixed(1) ?? '4.5'}</td>
-                                            <td style={{ fontSize: 11.5 }}>
+                                            <td style={{ fontSize: 12 }}>
                                                 {m.isVeg && <span style={{ color: 'var(--success)' }}>VEG </span>}
                                                 {m.isSpicy && <span style={{ color: 'var(--danger)' }}>SPICY </span>}
                                                 {m.isFeatured && <span style={{ color: 'var(--accent)' }}>★</span>}
                                             </td>
                                             <td>
-                                                <button onClick={() => setEditingItem(m)} className="btn btn-sm" style={{ background: 'rgba(108,99,255,0.15)', color: '#6c63ff', marginRight: 6 }}>
+                                                <button onClick={() => setEditingItem(m)} className="btn btn-sm" style={{ background: 'rgba(79,111,168,0.12)', color: 'var(--info)', marginRight: 6 }}>
                                                     <i className="fas fa-pen"></i>
                                                 </button>
-                                                <button onClick={() => deleteMenuItem(m._id)} className="btn btn-sm" style={{ background: 'rgba(255,71,87,0.15)', color: 'var(--danger)' }}>
+                                                <button onClick={() => deleteMenuItem(m._id)} className="btn btn-sm" style={{ background: 'rgba(var(--danger-rgb), 0.15)', color: 'var(--danger)' }}>
                                                     <i className="fas fa-trash"></i>
                                                 </button>
                                             </td>

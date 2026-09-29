@@ -30,8 +30,8 @@ export default function Orders() {
                     : orders.length === 0
                         ? <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
                             <i className="fas fa-receipt" style={{ fontSize: 48, color: 'var(--text-dim)', marginBottom: 16 }}></i>
-                            <p style={{ fontSize: 17, fontWeight: 600 }}>No orders yet</p>
-                            <span style={{ fontSize: 14 }}>Place your first order to see it here.</span>
+                            <p style={{ fontSize: 18, fontWeight: 600 }}>No orders yet</p>
+                            <span style={{ fontSize: 15 }}>Place your first order to see it here.</span>
                         </div>
                         : <div style={{ display: 'grid', gap: 16 }}>
                             {orders.map((o) => (
@@ -43,8 +43,8 @@ export default function Orders() {
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
                                         <div>
-                                            <strong style={{ fontSize: 14 }}>Order #{o._id.slice(-6).toUpperCase()}</strong>
-                                            <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+                                            <strong style={{ fontSize: 15 }}>Order #{o._id.slice(-6).toUpperCase()}</strong>
+                                            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                                                 {new Date(o.createdAt).toLocaleString()}
                                             </div>
                                         </div>
@@ -52,15 +52,15 @@ export default function Orders() {
                                     </div>
                                     <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
                                         {o.items.map((it, i) => (
-                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', padding: '6px 12px', borderRadius: 100, fontSize: 13 }}>
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', padding: '6px 12px', borderRadius: 100, fontSize: 14 }}>
                                                 <img src={it.image} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
                                                 {it.name} ×{it.quantity}
                                             </div>
                                         ))}
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{o.items.length} items</span>
-                                        <strong style={{ fontSize: 18, color: 'var(--primary)', fontFamily: 'Playfair Display, serif' }}>₹{o.total}</strong>
+                                        <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{o.items.length} items</span>
+                                        <strong style={{ fontSize: 18, color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>₹{o.total}</strong>
                                     </div>
                                 </div>
                             ))}

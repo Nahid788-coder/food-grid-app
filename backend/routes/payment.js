@@ -1,69 +1,79 @@
 import express from 'express';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import Razorpay from 'razorpay';
 import Order from '../models/Order.js';
 
 const router = express.Router();
 
-const getRazorpay = () => {
-    if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID.includes('REPLACE')) {
-        return null;
-    }
-    return new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+const configured = () => {
+    const id = process.env.RAZORPAY_KEY_ID;
+    return Boolean(id && process.env.RAZORPAY_KEY_SECRET && !/REPLACE|x{6,}/i.test(id));
 };
 
+const getRazorpay = () =>
+    configured()
+        ? new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
+        : null;
+
 router.get('/key', (_req, res) => {
-    const id = process.env.RAZORPAY_KEY_ID;
-    if (!id || id.includes('REPLACE')) {
-        return res.json({ key: null, configured: false });
-    }
-    res.json({ key: id, configured: true });
+    res.json(configured() ? { key: process.env.RAZORPAY_KEY_ID, configured: true } : { key: null, configured: false });
 });
 
+/** Creates a Razorpay order for an existing order. The amount always comes from the database. */
 router.post('/create-order', async (req, res) => {
     try {
-        const { amount } = req.body;
-        if (!amount || amount < 1) {
-            return res.status(400).json({ message: 'Invalid amount' });
-        }
+        const { orderId } = req.body;
+        if (!mongoose.isValidObjectId(orderId)) return res.status(400).json({ message: 'Invalid order' });
+
+        const order = await Order.findById(orderId);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+        if (order.paymentStatus === 'paid') return res.status(400).json({ message: 'Order is already paid' });
+
         const rzp = getRazorpay();
-        if (!rzp) {
-            return res.status(503).json({
-                message: 'Payment gateway not configured. Add RAZORPAY_KEY_ID to backend/.env',
-            });
-        }
-        const order = await rzp.orders.create({
-            amount: Math.round(amount * 100),
+        if (!rzp) return res.status(503).json({ message: 'Online payment is not configured yet. Please choose Cash on Delivery.' });
+
+        const rzpOrder = await rzp.orders.create({
+            amount: Math.round(order.total * 100),
             currency: 'INR',
-            receipt: `rcpt_${Date.now()}`,
+            receipt: `order_${order._id}`,
         });
-        res.json({ orderId: order.id, amount: order.amount, currency: order.currency });
+        order.razorpayOrderId = rzpOrder.id;
+        await order.save();
+
+        res.json({ orderId: rzpOrder.id, amount: rzpOrder.amount, currency: rzpOrder.currency });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: err.error?.description || err.message });
     }
 });
 
 router.post('/verify', async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
-        const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-        const expected = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-            .update(text)
-            .digest('hex');
-        if (expected !== razorpay_signature) {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        if (!configured() || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return res.status(400).json({ message: 'Payment verification failed', verified: false });
         }
-        if (orderId) {
-            await Order.findByIdAndUpdate(orderId, {
-                paymentStatus: 'paid',
-                paymentMethod: 'card',
-            });
+
+        const expected = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest('hex');
+        const a = Buffer.from(expected);
+        const b = Buffer.from(String(razorpay_signature));
+        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+            return res.status(400).json({ message: 'Payment verification failed', verified: false });
         }
-        res.json({ verified: true });
+
+        // The Razorpay order must be the one we created for this order.
+        const order = await Order.findOneAndUpdate(
+            { razorpayOrderId: razorpay_order_id },
+            { paymentStatus: 'paid', razorpayPaymentId: razorpay_payment_id },
+            { new: true },
+        );
+        if (!order) return res.status(404).json({ message: 'Order not found', verified: false });
+
+        req.app.get('io')?.to('admin').emit('order-updated', order);
+        res.json({ verified: true, orderId: order._id });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

@@ -249,8 +249,8 @@ export default function Home() {
                 <div className="container">
                     <Reveal>
                         <div style={{
-                            background: 'linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,182,39,0.1))',
-                            border: '1px solid rgba(255,107,53,0.25)',
+                            background: 'linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--accent-rgb), 0.1))',
+                            border: '1px solid rgba(var(--primary-rgb), 0.25)',
                             borderRadius: '32px',
                             padding: '70px 50px',
                             textAlign: 'center',

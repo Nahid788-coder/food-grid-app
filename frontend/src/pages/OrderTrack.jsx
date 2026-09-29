@@ -31,8 +31,10 @@ export default function OrderTrack() {
 
     useEffect(() => {
         if (!id) return;
-        if (!socket.connected) socket.connect();
-        socket.emit('subscribe-order', id);
+        const subscribe = () => socket.emit('subscribe-order', id);
+        socket.on('connect', subscribe); // rejoin after reconnects
+        if (socket.connected) subscribe();
+        else socket.connect();
         const onUpdate = (data) => {
             if (data.orderId === id) {
                 setOrder((prev) => prev ? { ...prev, status: data.status } : prev);
@@ -40,6 +42,7 @@ export default function OrderTrack() {
         };
         socket.on('order-status-update', onUpdate);
         return () => {
+            socket.off('connect', subscribe);
             socket.off('order-status-update', onUpdate);
         };
     }, [id]);
@@ -70,15 +73,15 @@ export default function OrderTrack() {
                 <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 36 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26, flexWrap: 'wrap', gap: 14 }}>
                         <div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Order ID</div>
-                            <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 24, fontWeight: 700 }}>
+                            <div style={{ fontSize: 13, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Order ID</div>
+                            <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700 }}>
                                 #{order._id.slice(-8).toUpperCase()}
                             </h2>
-                            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                            <p style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
                                 Placed {new Date(order.createdAt).toLocaleString()}
                             </p>
                         </div>
-                        <div className={`status-pill status-${order.status}`} style={{ fontSize: 13, padding: '6px 16px' }}>
+                        <div className={`status-pill status-${order.status}`} style={{ fontSize: 14, padding: '6px 16px' }}>
                             {order.status.replace(/-/g, ' ')}
                         </div>
                     </div>
@@ -100,7 +103,7 @@ export default function OrderTrack() {
                             })}
                         </div>
                     ) : (
-                        <div style={{ background: 'rgba(255,71,87,0.1)', border: '1px solid rgba(255,71,87,0.3)', color: 'var(--danger)', padding: 16, borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                        <div style={{ background: 'rgba(var(--danger-rgb), 0.1)', border: '1px solid rgba(var(--danger-rgb), 0.3)', color: 'var(--danger)', padding: 16, borderRadius: 'var(--radius)', textAlign: 'center' }}>
                             <i className="fas fa-circle-xmark" style={{ marginRight: 8 }}></i>
                             This order was cancelled.
                         </div>
@@ -111,13 +114,13 @@ export default function OrderTrack() {
                         animate={{ opacity: 1, y: 0 }}
                         style={{ marginTop: 36, padding: 22, background: 'var(--bg)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}
                     >
-                        <h3 style={{ fontSize: 16, marginBottom: 14, fontFamily: 'Outfit, sans-serif' }}>Items</h3>
+                        <h3 style={{ fontSize: 16, marginBottom: 14, fontFamily: 'var(--font-body)' }}>Items</h3>
                         {order.items.map((it, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i === order.items.length - 1 ? 'none' : '1px solid var(--border)' }}>
                                 <img src={it.image} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{it.name}</div>
-                                    <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Qty: {it.quantity}</div>
+                                    <div style={{ fontWeight: 600, fontSize: 15 }}>{it.name}</div>
+                                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Qty: {it.quantity}</div>
                                 </div>
                                 <strong>₹{it.price * it.quantity}</strong>
                             </div>
@@ -125,19 +128,19 @@ export default function OrderTrack() {
                         <div style={{ marginTop: 18, padding: '14px 0 0', borderTop: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 700 }}>
                                 <span>Total</span>
-                                <span style={{ color: 'var(--primary)', fontFamily: 'Playfair Display, serif' }}>₹{order.total}</span>
+                                <span style={{ color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>₹{order.total}</span>
                             </div>
                         </div>
                     </motion.div>
 
                     <div style={{ marginTop: 22, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                         <div style={{ background: 'var(--bg)', padding: 16, borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Delivery to</div>
-                            <div style={{ fontSize: 14 }}>{order.address}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Delivery to</div>
+                            <div style={{ fontSize: 15 }}>{order.address}</div>
                         </div>
                         <div style={{ background: 'var(--bg)', padding: 16, borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Payment</div>
-                            <div style={{ fontSize: 14, textTransform: 'uppercase' }}>{order.paymentMethod} • <span style={{ color: order.paymentStatus === 'paid' ? 'var(--success)' : 'var(--accent)' }}>{order.paymentStatus}</span></div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Payment</div>
+                            <div style={{ fontSize: 15, textTransform: 'uppercase' }}>{order.paymentMethod} • <span style={{ color: order.paymentStatus === 'paid' ? 'var(--success)' : 'var(--accent)' }}>{order.paymentStatus}</span></div>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,8 @@ const orderItemSchema = new mongoose.Schema({
     item: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' },
     name: String,
     image: String,
+    description: String,
+    category: String,
     price: Number,
     quantity: { type: Number, default: 1 },
 });
@@ -35,6 +37,8 @@ const orderSchema = new mongoose.Schema(
             enum: ['placed', 'preparing', 'out-for-delivery', 'delivered', 'cancelled'],
             default: 'placed',
         },
+        razorpayOrderId: { type: String, index: true },
+        razorpayPaymentId: String,
         notes: String,
     },
     { timestamps: true }

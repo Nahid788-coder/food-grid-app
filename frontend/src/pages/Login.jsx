@@ -51,7 +51,7 @@ export default function Login() {
                 <p className="auth-foot">
                     Don't have an account? <Link to="/register">Create one</Link>
                 </p>
-                <div style={{ marginTop: 20, padding: 14, background: 'var(--bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 12.5, color: 'var(--text-muted)', textAlign: 'center' }}>
+                <div style={{ marginTop: 20, padding: 14, background: 'var(--bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-muted)', textAlign: 'center' }}>
                     <strong style={{ color: 'var(--primary)' }}>Demo Admin:</strong> admin@sliceandcrust.com / admin123
                 </div>
             </div>

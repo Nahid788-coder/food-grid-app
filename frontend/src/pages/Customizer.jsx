@@ -86,6 +86,14 @@ export default function Customizer() {
             image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=85&auto=format&fit=crop',
             isVeg,
             category: 'custom',
+            // The server re-prices custom pizzas from these ids.
+            custom: {
+                size: size.id,
+                crust: crust.id,
+                sauce: sauce.id,
+                cheese: cheese.id,
+                toppings: toppings.map((t) => t.id),
+            },
         });
         toast.success('Custom pizza added to cart!');
     };
@@ -94,7 +102,7 @@ export default function Customizer() {
         <>
             <header className="page-title-bar">
                 <div className="container">
-                    <h1>Build Your <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Pizza</em></h1>
+                    <h1>Build Your <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Pizza</em></h1>
                     <p>Pick your size, crust, sauce, cheese & toppings — exactly how you like it.</p>
                 </div>
             </header>
@@ -218,7 +226,7 @@ export default function Customizer() {
                             </div>
 
                             <div className="opt-block">
-                                <h4>5. Toppings <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 400 }}>({toppings.length} selected)</span></h4>
+                                <h4>5. Toppings <span style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 400 }}>({toppings.length} selected)</span></h4>
                                 <div className="topping-grid">
                                     {TOPPINGS.map((t) => {
                                         const sel = toppings.find((p) => p.id === t.id);
@@ -240,8 +248,8 @@ export default function Customizer() {
 
                             <div className="custom-summary">
                                 <div>
-                                    <span style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Total</span>
-                                    <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 36, fontWeight: 700, color: 'var(--primary)' }}>
+                                    <span style={{ fontSize: 14, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Total</span>
+                                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: 'var(--primary)' }}>
                                         ₹{totalPrice}
                                     </div>
                                 </div>

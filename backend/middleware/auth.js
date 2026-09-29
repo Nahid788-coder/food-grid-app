@@ -24,3 +24,17 @@ export const adminOnly = (req, res, next) => {
     }
     next();
 };
+
+/** Attaches req.user when a valid token is sent, but never blocks guests. */
+export const optionalAuth = async (req, _res, next) => {
+    const header = req.headers.authorization;
+    if (header?.startsWith('Bearer ')) {
+        try {
+            const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.id);
+        } catch {
+            /* treat as guest */
+        }
+    }
+    next();
+};

@@ -1,167 +1,133 @@
-# 🍕 Slice & Crust — Premium Full-Stack Pizza Restaurant
+# 🍕 Slice & Crust: Full-Stack Pizza Restaurant
 
-Production-ready restaurant ordering app with real-time order tracking, online payments, admin analytics, and a custom pizza builder.
+An online ordering app for a wood-fired pizzeria. It has a pizza builder, live order tracking, online payments, table booking and an admin dashboard with charts.
+Built by **[Nahid Husain Doi](https://portfolio-coral-nu-78.vercel.app)**.
 
-**Stack:** React 19 + Vite + Framer Motion + Socket.io · Node.js + Express 5 + Mongoose · MongoDB
+**Stack:** React 19, Vite, Framer Motion, Socket.io client · Node.js, Express 5, Mongoose, Socket.io · MongoDB Atlas
+**Hosting (all free):** Vercel (frontend) · Render (API) · MongoDB Atlas M0 (database)
 
 ---
 
 ## ✨ Features
 
-### Customer
-- 🎨 Premium animated UI with hero, scroll reveals, page loader, scroll progress
-- 🍕 Full menu with category filters, search, ratings, badges (Veg / Spicy / Featured)
-- 🛠️ **Pizza Customizer** — build your own pizza (size, crust, sauce, cheese, 12 toppings) with live visual preview & price
-- 🛒 Cart drawer with localStorage persistence
-- 💳 Checkout with **Razorpay** integration (UPI / cards) + Cash on Delivery
-- 📡 **Real-time order tracking** (Socket.io) — see status update live without refresh
-- 🔐 JWT-based auth (register / login)
-- 📜 "My Orders" history with status pills
-- 📅 Table booking system
-- 💬 Floating WhatsApp chat button
+### For customers
+- A warm "Espresso Cream" light theme, using Fraunces for headings and DM Sans for text, that works on phones and desktops.
+- The menu has category filters, search, ratings, and Veg / Spicy / Popular badges.
+- **Pizza Customizer**: pick size, crust, sauce, cheese and up to 12 toppings, with a live preview and price.
+- The cart is saved in the browser. Checkout offers **Cash on Delivery** or **Razorpay** (UPI, cards, net banking; test mode works without real money).
+- **Live order tracking** with Socket.io: the status changes on screen without refreshing the page.
+- Accounts use JWT. "My Orders" lists your history, and you can book a table.
 
-### Admin
-- 📊 **Live Dashboard** with charts (Recharts) — revenue trend, order status pie, top items
-- 🔔 Real-time new order notifications (Socket.io toast)
-- 📦 Full Menu CRUD with **Cloudinary image upload**
-- 📋 Manage orders — update status (placed → preparing → out → delivered)
-- 📅 Manage table bookings
-- 💰 Today's revenue, orders count, total stats
+### For the admin
+- A live dashboard with charts showing 7-day revenue, orders by status and top-selling items.
+- Real-time alerts for new orders.
+- Order and booking status management, which pushes updates to the customer instantly.
+- Menu management (create, edit, delete), with optional Cloudinary image upload.
 
-### UX Polish
-- Skeleton loaders while data fetches
-- Animated page loader on first visit
-- Smooth Framer Motion reveals throughout
-- Mobile-responsive (works perfectly on phones)
-- Dark theme with warm orange accent
+### Security and reliability
+- **Prices are calculated on the server.** The API reprices every order from the database, so a price changed in the browser is ignored. Custom pizzas are priced from a server-side price list.
+- Razorpay orders are created from the order's stored total. Payments are checked with an HMAC signature and matched to the exact order.
+- Orders and bookings are linked to the logged-in user, while guests can still order.
+- The public tracking link masks the phone number and shows only the area of the address.
+- Only a verified admin token can join the Socket.io admin room.
+- The API uses Helmet, rate limiting on auth, orders, bookings and payments, a CORS allow-list, input limits and status validation.
+- A new database gets the sample menu and the admin account automatically on first start, so the free Render plan works without a shell.
+- The frontend shows a "waking up the server" notice when the free Render API is cold-starting.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Run locally
 
-### 1. MongoDB
-- **Local:** Install MongoDB Community → service auto-starts
-- **Atlas (free, recommended):** https://cloud.mongodb.com → create M0 cluster → copy connection string
-
-### 2. Backend
 ```bash
+# 1. API
 cd backend
+cp .env.example .env      # set MONGO_URI and JWT_SECRET at minimum
 npm install
-# Edit .env — set MONGO_URI (and optionally Razorpay/Cloudinary keys)
-npm run seed     # populates 16 menu items + admin user
-npm run dev      # http://localhost:5000
-```
+npm run dev               # http://localhost:5000  (menu + admin are seeded on first start)
 
-### 3. Frontend
-```bash
+# 2. Frontend (new terminal)
 cd frontend
 npm install
-npm run dev      # http://localhost:5173
+npm run dev               # http://localhost:5173
 ```
 
----
-
-## 🔑 Environment Variables (`backend/.env`)
-
-| Key | Required | Where to get |
-|-----|----------|--------------|
-| `MONGO_URI` | ✅ Yes | Local or [MongoDB Atlas](https://cloud.mongodb.com) (free) |
-| `JWT_SECRET` | ✅ Yes | Any random string (32+ chars) |
-| `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` | Optional | [Razorpay Dashboard](https://dashboard.razorpay.com) → Test Mode (free) |
-| `CLOUDINARY_*` | Optional | [Cloudinary](https://cloudinary.com) (free 25GB) |
-
-App works without Razorpay/Cloudinary — those features show graceful "not configured" messages.
+`npm run seed` resets the menu to the 16 sample items.
 
 ---
 
-## 🔐 Demo Credentials (after `npm run seed`)
-- **Admin:** `admin@sliceandcrust.com` / `admin123`
-- **Customer:** Register fresh at `/register`
+## 🌐 Deploy for free
+
+### 1. Database: MongoDB Atlas (M0 free)
+1. Create a free **M0** cluster at https://cloud.mongodb.com.
+2. Go to **Database Access** and add a user with a password.
+3. Go to **Network Access** and add `0.0.0.0/0`, because Render's free IPs change.
+4. Go to **Connect → Drivers** and copy the connection string. Put your password in it and add a database name, like `.../slice-and-crust?retryWrites=true&w=majority`.
+
+### 2. API: Render (free web service)
+1. On https://render.com choose **New → Blueprint** and pick this repo. `render.yaml` sets everything up.
+2. Fill in:
+   - `MONGO_URI`: the Atlas string from above.
+   - `CLIENT_URL`: your Vercel URL (you can add it after step 3).
+   - `ADMIN_PASSWORD`: a password of your choice.
+   - The Razorpay test keys (optional).
+3. Deploy and open `https://<your-service>.onrender.com/api/health`. It should show `"db":"connected"`.
+
+The free plan sleeps after 15 idle minutes, and the first request after that takes about 40 seconds.
+
+### 3. Frontend: Vercel (Hobby, free)
+1. **Add New → Project**, then import this repo and set **Root Directory** to `frontend`.
+2. Add the environment variable `VITE_API_URL=https://<your-service>.onrender.com/api`.
+3. Deploy, then put the Vercel URL into Render's `CLIENT_URL`.
 
 ---
 
-## 🌐 API Endpoints
+## 🔑 Environment variables (`backend/.env`)
+
+| Key | Required | Notes |
+|-----|----------|-------|
+| `MONGO_URI` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | Long random string. Render generates one for you |
+| `CLIENT_URL` | ✅ in production | Frontend URL(s), comma separated |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | ✅ | The admin account created on first start |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Optional | Test-mode keys. Without them, only Cash on Delivery is offered |
+| `CLOUDINARY_*` | Optional | Admin image upload. Without it, paste image URLs instead |
+
+Frontend: `VITE_API_URL` is the API base URL. `VITE_BASE` is only needed for a sub-path build like GitHub Pages.
+
+---
+
+## 🌐 API
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| **Auth** | | | |
-| POST | `/api/auth/register` | — | Create account |
-| POST | `/api/auth/login` | — | Sign in |
-| GET | `/api/auth/me` | user | Get current user |
-| **Menu** | | | |
-| GET | `/api/menu?category=&featured=` | — | List items |
-| POST | `/api/menu` | admin | Add item |
-| PUT | `/api/menu/:id` | admin | Update |
-| DELETE | `/api/menu/:id` | admin | Delete |
-| **Orders** | | | |
-| POST | `/api/orders` | — | Place order |
-| GET | `/api/orders/track/:id` | — | Track an order (public) |
+| POST | `/api/auth/register`, `/api/auth/login` | — | Create account / sign in |
+| GET | `/api/auth/me` | user | Current user |
+| GET | `/api/menu` | — | Menu (`?category=&featured=`) |
+| POST/PUT/DELETE | `/api/menu/:id` | admin | Manage menu |
+| POST | `/api/orders` | optional | Place an order (items are ids and quantities, and the server sets prices) |
+| GET | `/api/orders/track/:id` | — | Public tracking (contact details masked) |
 | GET | `/api/orders/my` | user | My orders |
-| GET | `/api/orders` | admin | All orders |
-| PUT | `/api/orders/:id/status` | admin | Update status (emits socket event) |
-| **Bookings** | | | |
-| POST | `/api/bookings` | — | Create booking |
-| GET | `/api/bookings` | admin | All bookings |
-| PUT | `/api/bookings/:id/status` | admin | Update |
-| **Payment (Razorpay)** | | | |
-| GET | `/api/payment/key` | — | Get publishable key |
-| POST | `/api/payment/create-order` | — | Create Razorpay order |
-| POST | `/api/payment/verify` | — | Verify payment signature |
-| **Upload (Cloudinary)** | | | |
-| POST | `/api/upload/image` | admin | Upload image (multipart) |
-| **Stats** | | | |
-| GET | `/api/stats` | admin | Dashboard data (revenue, charts, top items) |
+| GET | `/api/orders` · PUT `/api/orders/:id/status` | admin | All orders / update status (sends a socket event) |
+| POST | `/api/bookings` | optional | Book a table |
+| GET · PUT | `/api/bookings`, `/api/bookings/:id/status` | admin | Manage bookings |
+| GET | `/api/payment/key` | — | Razorpay public key (if configured) |
+| POST | `/api/payment/create-order`, `/api/payment/verify` | — | Razorpay order for an existing order / verify signature |
+| POST | `/api/upload/image` | admin | Cloudinary upload |
+| GET | `/api/stats` | admin | Dashboard numbers |
+| GET | `/api/health` | — | Health check |
+
+**Socket.io events:** `subscribe-order` · `admin-join` (needs an admin JWT) · `order-status-update` · `new-order` · `order-updated`
 
 ---
 
-## 🔌 Socket.io Events
-
-| Event | Direction | Purpose |
-|-------|-----------|---------|
-| `subscribe-order` | client → server | Subscribe to order status updates |
-| `admin-join` | client → server | Admin joins admin room |
-| `order-status-update` | server → client | Live order status push |
-| `new-order` | server → admin | New order notification |
-| `order-updated` | server → admin | Order changed |
-
----
-
-## 📦 Folder Structure
+## 📦 Structure
 
 ```
-pizza-app/
-├── backend/
-│   ├── models/         User, MenuItem, Order, Booking
-│   ├── routes/         auth, menu, orders, bookings, payment, upload, stats
-│   ├── middleware/     JWT auth + admin guard
-│   ├── seed.js         Sample data
-│   └── server.js       Express + Socket.io
-└── frontend/
-    └── src/
-        ├── api/        axios + socket
-        ├── components/ Navbar, Footer, CartDrawer, MenuCard, etc.
-        ├── context/    Auth + Cart
-        ├── pages/      Home, Menu, Customizer, About, Booking,
-        │               Contact, Login, Register, Checkout, Orders,
-        │               OrderTrack, Admin
-        └── styles/     Global CSS with design tokens
+backend/   Express API: models, routes, middleware, lib/pricing.js, lib/seedData.js, server.js
+frontend/  React app: pages, components, context (auth, cart), api (axios, socket), styles
+render.yaml  Render blueprint for the API
 ```
 
 ---
 
-## 🚢 Production Deployment
-
-### Backend → Render (free)
-1. Push backend to a GitHub repo
-2. New Web Service → connect repo
-3. Build: `npm install` · Start: `npm start`
-4. Add env vars: `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL`, etc.
-
-### Frontend → Vercel (free)
-1. Push frontend to a GitHub repo
-2. Import to Vercel → set `VITE_API_URL=https://your-backend.onrender.com/api`
-3. Deploy
-
----
-
-© 2026 Nahid Husain. All rights reserved.
+© 2026 Nahid Husain Doi

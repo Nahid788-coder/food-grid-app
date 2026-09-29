@@ -38,10 +38,12 @@ export default function Checkout() {
     const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
     const placeOrderInDB = async () => {
+        // Only ids and quantities are sent; the server works out every price.
         const { data } = await api.post('/orders', {
             ...form,
-            items: items.map((i) => ({ item: i._id?.startsWith?.('custom-') ? null : i._id, name: i.name, image: i.image, price: i.price, quantity: i.quantity })),
-            subtotal, deliveryFee, total,
+            items: items.map((i) =>
+                i.custom ? { custom: i.custom, quantity: i.quantity } : { item: i._id, quantity: i.quantity }
+            ),
         });
         return data;
     };
@@ -56,8 +58,16 @@ export default function Checkout() {
             return null;
         }
 
-        const { data: rzpOrder } = await api.post('/payment/create-order', { amount: total });
         const order = await placeOrderInDB();
+        let rzpOrder;
+        try {
+            ({ data: rzpOrder } = await api.post('/payment/create-order', { orderId: order._id }));
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Could not start payment');
+            clear();
+            navigate(`/track/${order._id}`);
+            return null;
+        }
 
         return new Promise((resolve) => {
             const options = {
@@ -72,13 +82,10 @@ export default function Checkout() {
                     email: form.customerEmail,
                     contact: form.customerPhone,
                 },
-                theme: { color: '#ff6b35' },
+                theme: { color: '#C8452C' },
                 handler: async (response) => {
                     try {
-                        await api.post('/payment/verify', {
-                            ...response,
-                            orderId: order._id,
-                        });
+                        await api.post('/payment/verify', response);
                         toast.success('Payment successful! 🎉');
                         clear();
                         navigate(`/track/${order._id}`);
@@ -146,7 +153,7 @@ export default function Checkout() {
                 <div className="checkout-grid">
                     <Reveal>
                         <form onSubmit={submit} className="booking-form" style={{ padding: 32 }}>
-                            <h3 style={{ marginBottom: 18, fontFamily: 'Outfit, sans-serif', fontSize: 18 }}>Delivery Details</h3>
+                            <h3 style={{ marginBottom: 18, fontFamily: 'var(--font-body)', fontSize: 18 }}>Delivery Details</h3>
                             <div className="form-row">
                                 <div className="form-field">
                                     <label>Full Name *</label>
@@ -170,7 +177,7 @@ export default function Checkout() {
                                 <textarea name="notes" value={form.notes} onChange={onChange} placeholder="Less spicy, no onions, ring bell twice..." />
                             </div>
 
-                            <h3 style={{ margin: '24px 0 14px', fontFamily: 'Outfit, sans-serif', fontSize: 18 }}>Payment Method</h3>
+                            <h3 style={{ margin: '24px 0 14px', fontFamily: 'var(--font-body)', fontSize: 18 }}>Payment Method</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 14 }}>
                                 {[
                                     { v: 'cod', l: 'Cash on Delivery', i: 'fas fa-money-bill-wave' },
@@ -183,8 +190,8 @@ export default function Checkout() {
                                         gap: 10, cursor: 'pointer',
                                         border: `1.5px solid ${form.paymentMethod === p.v ? 'var(--primary)' : 'var(--border)'}`,
                                         borderRadius: 'var(--radius)',
-                                        background: form.paymentMethod === p.v ? 'rgba(255,107,53,0.1)' : 'var(--bg)',
-                                        fontWeight: 500, fontSize: 14, transition: 'all 0.2s',
+                                        background: form.paymentMethod === p.v ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg)',
+                                        fontWeight: 500, fontSize: 15, transition: 'all 0.2s',
                                     }}>
                                         <input type="radio" name="paymentMethod" value={p.v} checked={form.paymentMethod === p.v} onChange={onChange} style={{ width: 'auto' }} />
                                         <i className={p.i} style={{ color: 'var(--primary)' }}></i> {p.l}
@@ -195,8 +202,8 @@ export default function Checkout() {
                             {/* Payment-specific info card */}
                             <div style={{
                                 padding: '16px 20px',
-                                background: 'rgba(255,107,53,0.06)',
-                                border: '1px solid rgba(255,107,53,0.2)',
+                                background: 'rgba(var(--primary-rgb), 0.06)',
+                                border: '1px solid rgba(var(--primary-rgb), 0.2)',
                                 borderRadius: 'var(--radius)',
                                 marginBottom: 18,
                                 animation: 'fadeIn 0.3s ease',
@@ -205,9 +212,9 @@ export default function Checkout() {
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                                             <i className="fas fa-circle-info" style={{ color: 'var(--primary)' }}></i>
-                                            <strong style={{ fontSize: 14.5 }}>Pay on Delivery</strong>
+                                            <strong style={{ fontSize: 15 }}>Pay on Delivery</strong>
                                         </div>
-                                        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                                        <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                                             Hand cash to the delivery partner when your order arrives. Please keep exact change ready.
                                         </p>
                                     </div>
@@ -217,16 +224,16 @@ export default function Checkout() {
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                             <i className="fas fa-mobile-screen" style={{ color: 'var(--primary)' }}></i>
-                                            <strong style={{ fontSize: 14.5 }}>UPI Payment</strong>
+                                            <strong style={{ fontSize: 15 }}>UPI Payment</strong>
                                         </div>
-                                        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
+                                        <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
                                             Pay instantly with PhonePe, Google Pay, Paytm or any UPI app. You'll be redirected to a secure Razorpay window.
                                         </p>
                                         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                                             {['PhonePe', 'GPay', 'Paytm', 'BHIM'].map((u) => (
                                                 <span key={u} style={{
-                                                    background: 'rgba(255,255,255,0.06)', padding: '6px 12px',
-                                                    borderRadius: 100, fontSize: 11.5, fontWeight: 600,
+                                                    background: 'rgba(var(--ink-rgb), 0.06)', padding: '6px 12px',
+                                                    borderRadius: 100, fontSize: 12, fontWeight: 600,
                                                     border: '1px solid var(--border)',
                                                 }}>
                                                     <i className="fab fa-google-pay" style={{ marginRight: 5, color: 'var(--primary)', display: u === 'GPay' ? 'inline' : 'none' }}></i>
@@ -241,16 +248,16 @@ export default function Checkout() {
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                             <i className="fas fa-credit-card" style={{ color: 'var(--primary)' }}></i>
-                                            <strong style={{ fontSize: 14.5 }}>Card Payment</strong>
+                                            <strong style={{ fontSize: 15 }}>Card Payment</strong>
                                         </div>
-                                        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
+                                        <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
                                             Visa, Mastercard, RuPay, American Express accepted. 3D-Secure protected via Razorpay.
                                         </p>
                                         <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
                                             <i className="fab fa-cc-visa" style={{ fontSize: 28, color: '#1a1f71' }}></i>
                                             <i className="fab fa-cc-mastercard" style={{ fontSize: 28, color: '#eb001b' }}></i>
                                             <i className="fab fa-cc-amex" style={{ fontSize: 28, color: '#006fcf' }}></i>
-                                            <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', padding: '4px 10px', background: 'rgba(255,255,255,0.06)', borderRadius: 100 }}>
+                                            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', padding: '4px 10px', background: 'rgba(var(--ink-rgb), 0.06)', borderRadius: 100 }}>
                                                 <i className="fas fa-shield-halved" style={{ marginRight: 4, color: 'var(--success)' }}></i> Secure
                                             </span>
                                         </div>
@@ -261,16 +268,16 @@ export default function Checkout() {
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                             <i className="fas fa-building-columns" style={{ color: 'var(--primary)' }}></i>
-                                            <strong style={{ fontSize: 14.5 }}>Net Banking</strong>
+                                            <strong style={{ fontSize: 15 }}>Net Banking</strong>
                                         </div>
-                                        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
+                                        <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 12 }}>
                                             Pay directly from your bank account. Choose your bank in the next step (Razorpay).
                                         </p>
                                         <select
                                             name="bank"
                                             value={form.bank || ''}
                                             onChange={onChange}
-                                            style={{ fontSize: 13.5 }}
+                                            style={{ fontSize: 14 }}
                                         >
                                             <option value="">— Choose your bank —</option>
                                             <option value="hdfc">HDFC Bank</option>
@@ -292,8 +299,8 @@ export default function Checkout() {
                                 {loading
                                     ? <><i className="fas fa-spinner fa-spin"></i> Processing...</>
                                     : form.paymentMethod === 'cod'
-                                        ? <><i className="fas fa-bag-shopping"></i> Place Order — ₹{total}</>
-                                        : <><i className="fas fa-credit-card"></i> Pay Now — ₹{total}</>
+                                        ? <><i className="fas fa-bag-shopping"></i> Place Order — ₹{total.toFixed(2)}</>
+                                        : <><i className="fas fa-credit-card"></i> Pay Now — ₹{total.toFixed(2)}</>
                                 }
                             </button>
                         </form>
@@ -307,19 +314,19 @@ export default function Checkout() {
                                     <div key={it._id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                                         <img src={it.image} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} />
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: 14, fontWeight: 600 }}>{it.name}</div>
-                                            <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Qty: {it.quantity}</div>
+                                            <div style={{ fontSize: 15, fontWeight: 600 }}>{it.name}</div>
+                                            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Qty: {it.quantity}</div>
                                         </div>
-                                        <strong style={{ fontSize: 14 }}>₹{it.price * it.quantity}</strong>
+                                        <strong style={{ fontSize: 15 }}>₹{it.price * it.quantity}</strong>
                                     </div>
                                 ))}
                             </div>
                             <div className="checkout-line"><span>Subtotal</span><span>₹{subtotal}</span></div>
                             <div className="checkout-line"><span>Delivery</span><span>{deliveryFee === 0 ? <span style={{ color: 'var(--success)' }}>Free</span> : `₹${deliveryFee}`}</span></div>
-                            <div className="checkout-line"><span>Tax (5%)</span><span>₹{tax}</span></div>
-                            <div className="checkout-line total"><span>Total</span><span>₹{total}</span></div>
+                            <div className="checkout-line"><span>Tax (5%)</span><span>₹{tax.toFixed(2)}</span></div>
+                            <div className="checkout-line total"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
                             {subtotal < 599 && (
-                                <p style={{ fontSize: 12, color: 'var(--accent)', marginTop: 12, textAlign: 'center' }}>
+                                <p style={{ fontSize: 13, color: 'var(--accent)', marginTop: 12, textAlign: 'center' }}>
                                     Add ₹{599 - subtotal} more for free delivery 🚚
                                 </p>
                             )}

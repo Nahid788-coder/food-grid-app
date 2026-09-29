@@ -1,0 +1,28 @@
+# Render Blueprint: backend API on the free plan.
+# In Render: New > Blueprint > pick this repo, then fill in the secret values it asks for.
+services:
+  - type: web
+    name: slice-and-crust-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: ADMIN_EMAIL
+        value: admin@sliceandcrust.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

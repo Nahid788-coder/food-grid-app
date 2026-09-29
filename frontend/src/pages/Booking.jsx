@@ -30,7 +30,7 @@ export default function Booking() {
         <>
             <header className="page-title-bar">
                 <div className="container">
-                    <h1>Reserve your <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Table</em></h1>
+                    <h1>Reserve your <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>Table</em></h1>
                     <p>Skip the wait — book in advance for the best experience.</p>
                 </div>
             </header>

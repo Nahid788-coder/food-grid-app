@@ -12,7 +12,7 @@ export default function Contact() {
         <>
             <header className="page-title-bar">
                 <div className="container">
-                    <h1>Visit us <em style={{ background: 'linear-gradient(135deg, #ff6b35, #ffb627)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>today</em></h1>
+                    <h1>Visit us <em style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic' }}>today</em></h1>
                     <p>We'd love to host you. Drop by, call, or send us a message.</p>
                 </div>
             </header>

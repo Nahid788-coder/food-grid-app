@@ -44,7 +44,7 @@ export default function Footer() {
                 <div className="footer-col">
                     <h5>Hours</h5>
                     <p>Monday – Sunday<br />11:00 AM – 11:00 PM</p>
-                    <p style={{ marginTop: 14, color: '#ff6b35', fontWeight: 600 }}>
+                    <p style={{ marginTop: 14, color: 'var(--primary)', fontWeight: 600 }}>
                         Friday Special:<br />Buy 1 Get 1 — 7-9 PM
                     </p>
                 </div>
@@ -52,7 +52,7 @@ export default function Footer() {
             <div className="footer-bottom container">
                 <p>
                     &copy; 2026 Slice &amp; Crust. All rights reserved. Crafted with{' '}
-                    <i className="fas fa-heart" style={{ color: '#ff6b35' }}></i>
+                    <i className="fas fa-heart" style={{ color: 'var(--primary)' }}></i>
                 </p>
             </div>
         </footer>

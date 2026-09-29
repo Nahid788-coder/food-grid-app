@@ -15,7 +15,7 @@ export default function CartDrawer() {
             <div className={`cart-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
             <aside className={`cart-drawer ${open ? 'open' : ''}`}>
                 <div className="cart-head">
-                    <h3>Your Cart <span style={{ color: '#9999a8', fontWeight: 400 }}>({count})</span></h3>
+                    <h3>Your Cart <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({count})</span></h3>
                     <button className="cart-close" onClick={() => setOpen(false)}>
                         <i className="fas fa-xmark"></i>
                     </button>
@@ -42,7 +42,7 @@ export default function CartDrawer() {
                                     </div>
                                 </div>
                                 <button onClick={() => removeItem(it._id)} className="cart-close" aria-label="Remove">
-                                    <i className="fas fa-trash" style={{ fontSize: 12 }}></i>
+                                    <i className="fas fa-trash" style={{ fontSize: 13 }}></i>
                                 </button>
                             </div>
                         ))
