@@ -25,6 +25,14 @@ export const adminOnly = (req, res, next) => {
     next();
 };
 
+/** Admins, plus the read-only demo account used on the portfolio. Use only on GET routes. */
+export const staffRead = (req, res, next) => {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'demo') {
+        return res.status(403).json({ message: 'Admin access required' });
+    }
+    next();
+};
+
 /** Attaches req.user when a valid token is sent, but never blocks guests. */
 export const optionalAuth = async (req, _res, next) => {
     const header = req.headers.authorization;

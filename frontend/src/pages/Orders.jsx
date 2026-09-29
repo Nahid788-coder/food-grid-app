@@ -59,7 +59,7 @@ export default function Orders() {
                                         ))}
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                                        <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{o.items.length} items</span>
+                                        <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{o.items.length} {o.items.length === 1 ? 'item' : 'items'}</span>
                                         <strong style={{ fontSize: 18, color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>₹{o.total}</strong>
                                     </div>
                                 </div>

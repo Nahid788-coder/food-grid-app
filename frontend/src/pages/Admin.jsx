@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { socket } from '../api/socket';
 import MenuItemForm from '../components/MenuItemForm.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const STATUS_FLOW = {
     order: ['placed', 'preparing', 'out-for-delivery', 'delivered', 'cancelled'],
@@ -19,6 +20,8 @@ const PIE_COLORS = [C.primary, C.accent, C.basil, C.info, C.cocoa, C.plum];
 const TOOLTIP = { background: '#FFFFFF', border: '1px solid #EADFCF', borderRadius: 10, color: '#3B2A20', boxShadow: '0 10px 30px -12px rgba(59,42,32,0.25)' };
 
 export default function Admin() {
+    const { user } = useAuth();
+    const readOnly = user?.role === 'demo';
     const [tab, setTab] = useState('overview');
     const [stats, setStats] = useState(null);
     const [orders, setOrders] = useState([]);
@@ -141,6 +144,13 @@ export default function Admin() {
                     </span>
                 </p>
 
+                {readOnly && (
+                    <div className="demo-banner">
+                        <i className="fas fa-eye"></i>
+                        <span><strong>Read-only demo.</strong> You can explore everything, but changes are disabled and customer contact details are hidden.</span>
+                    </div>
+                )}
+
                 <div className="admin-tabs">
                     <button className={`admin-tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
                         Overview
@@ -249,14 +259,14 @@ export default function Admin() {
                                             <div>{o.customerName}</div>
                                             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{o.customerPhone}</div>
                                         </td>
-                                        <td style={{ fontSize: 14 }}>{o.items.length} items</td>
+                                        <td style={{ fontSize: 14 }}>{o.items.length} {o.items.length === 1 ? 'item' : 'items'}</td>
                                         <td style={{ fontWeight: 700, color: 'var(--primary)' }}>₹{o.total}</td>
                                         <td style={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
                                             {o.paymentMethod}
                                             <div style={{ fontSize: 12, color: o.paymentStatus === 'paid' ? 'var(--success)' : 'var(--accent)' }}>{o.paymentStatus}</div>
                                         </td>
                                         <td>
-                                            <select value={o.status} onChange={(e) => updateOrderStatus(o._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
+                                            <select value={o.status} disabled={readOnly} title={readOnly ? 'Disabled in demo' : undefined} onChange={(e) => updateOrderStatus(o._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
                                                 {STATUS_FLOW.order.map((s) => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
@@ -283,7 +293,7 @@ export default function Admin() {
                                         <td>{b.time}</td>
                                         <td>{b.guests}</td>
                                         <td>
-                                            <select value={b.status} onChange={(e) => updateBookingStatus(b._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
+                                            <select value={b.status} disabled={readOnly} title={readOnly ? 'Disabled in demo' : undefined} onChange={(e) => updateBookingStatus(b._id, e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 'auto' }}>
                                                 {STATUS_FLOW.booking.map((s) => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
@@ -297,7 +307,7 @@ export default function Admin() {
                 {tab === 'menu' && (
                     <>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                            <button className="btn btn-primary" onClick={() => setEditingItem(null)}>
+                            <button className="btn btn-primary" disabled={readOnly} title={readOnly ? 'Disabled in demo' : undefined} onClick={() => setEditingItem(null)}>
                                 <i className="fas fa-plus"></i> Add Item
                             </button>
                         </div>
@@ -320,10 +330,10 @@ export default function Admin() {
                                                 {m.isFeatured && <span style={{ color: 'var(--accent)' }}>★</span>}
                                             </td>
                                             <td>
-                                                <button onClick={() => setEditingItem(m)} className="btn btn-sm" style={{ background: 'rgba(79,111,168,0.12)', color: 'var(--info)', marginRight: 6 }}>
+                                                <button disabled={readOnly} title={readOnly ? 'Disabled in demo' : 'Edit'} onClick={() => setEditingItem(m)} className="btn btn-sm" style={{ background: 'rgba(79,111,168,0.12)', color: 'var(--info)', marginRight: 6 }}>
                                                     <i className="fas fa-pen"></i>
                                                 </button>
-                                                <button onClick={() => deleteMenuItem(m._id)} className="btn btn-sm" style={{ background: 'rgba(var(--danger-rgb), 0.15)', color: 'var(--danger)' }}>
+                                                <button disabled={readOnly} title={readOnly ? 'Disabled in demo' : 'Delete'} onClick={() => deleteMenuItem(m._id)} className="btn btn-sm" style={{ background: 'rgba(var(--danger-rgb), 0.15)', color: 'var(--danger)' }}>
                                                     <i className="fas fa-trash"></i>
                                                 </button>
                                             </td>

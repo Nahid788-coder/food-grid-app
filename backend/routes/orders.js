@@ -1,14 +1,14 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Order from '../models/Order.js';
-import { protect, adminOnly, optionalAuth } from '../middleware/auth.js';
+import { protect, adminOnly, optionalAuth, staffRead } from '../middleware/auth.js';
+import { maskOrder, maskPhone, notifyStaff } from '../lib/privacy.js';
 import { priceCart } from '../lib/pricing.js';
 
 const router = express.Router();
 
 const STATUSES = ['placed', 'preparing', 'out-for-delivery', 'delivered', 'cancelled'];
 const clean = (v, max = 300) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-const maskPhone = (p = '') => (p.length > 4 ? `${'•'.repeat(p.length - 4)}${p.slice(-4)}` : p);
 
 router.post('/', optionalAuth, async (req, res) => {
     try {
@@ -34,7 +34,7 @@ router.post('/', optionalAuth, async (req, res) => {
             ...priced,
         });
 
-        req.app.get('io')?.to('admin').emit('new-order', order);
+        notifyStaff(req.app.get('io'), 'new-order', order);
         res.status(201).json(order);
     } catch (err) {
         res.status(err.status || 400).json({ message: err.message });
@@ -56,11 +56,11 @@ router.get('/track/:id', async (req, res) => {
     res.json(order);
 });
 
-router.get('/', protect, adminOnly, async (req, res) => {
+router.get('/', protect, staffRead, async (req, res) => {
     const { status } = req.query;
     const filter = STATUSES.includes(status) ? { status } : {};
-    const orders = await Order.find(filter).populate('user', 'name email').sort('-createdAt').limit(500);
-    res.json(orders);
+    const orders = await Order.find(filter).populate('user', 'name email').sort('-createdAt').limit(500).lean();
+    res.json(req.user.role === 'demo' ? orders.map(maskOrder) : orders);
 });
 
 router.put('/:id/status', protect, adminOnly, async (req, res) => {
@@ -71,7 +71,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
 
         const io = req.app.get('io');
         io?.to(`order:${order._id}`).emit('order-status-update', { orderId: order._id, status: order.status });
-        io?.to('admin').emit('order-updated', order);
+        notifyStaff(io, 'order-updated', order);
         res.json(order);
     } catch (err) {
         res.status(400).json({ message: err.message });

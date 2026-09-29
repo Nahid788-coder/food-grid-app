@@ -53,7 +53,7 @@ export default function Navbar() {
                             </NavLink>
                         </li>
                     ))}
-                    {user?.role === 'admin' && (
+                    {(user?.role === 'admin' || user?.role === 'demo') && (
                         <li>
                             <NavLink
                                 to="/admin"

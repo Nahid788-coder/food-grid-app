@@ -3,12 +3,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext.jsx';
 
+const DEMO_EMAIL = 'demo@sliceandcrust.com';
+const DEMO_PASSWORD = 'demo-view-only';
+
 export default function Login() {
     const [form, setForm] = useState({ email: '', password: '' });
     const { login, loading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from || '/';
+    const isStaff = (u) => u.role === 'admin' || u.role === 'demo';
 
     const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -17,9 +21,20 @@ export default function Login() {
         try {
             const u = await login(form.email, form.password);
             toast.success(`Welcome back, ${u.name}!`);
-            navigate(u.role === 'admin' ? '/admin' : from, { replace: true });
+            navigate(isStaff(u) ? '/admin' : from, { replace: true });
         } catch (err) {
             toast.error(err.response?.data?.message || 'Login failed');
+        }
+    };
+
+    // Public read-only account so visitors can explore the admin dashboard.
+    const tryDemo = async () => {
+        try {
+            const u = await login(DEMO_EMAIL, DEMO_PASSWORD);
+            toast.success('Welcome to the read-only admin demo');
+            navigate(isStaff(u) ? '/admin' : '/', { replace: true });
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Demo login is not available right now');
         }
     };
 
@@ -51,8 +66,11 @@ export default function Login() {
                 <p className="auth-foot">
                     Don't have an account? <Link to="/register">Create one</Link>
                 </p>
-                <div style={{ marginTop: 20, padding: 14, background: 'var(--bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-muted)', textAlign: 'center' }}>
-                    <strong style={{ color: 'var(--primary)' }}>Demo Admin:</strong> admin@sliceandcrust.com / admin123
+                <div className="demo-box">
+                    <p><strong>Just exploring?</strong> See the admin dashboard with live charts and orders. It is read-only and customer details are hidden.</p>
+                    <button type="button" className="btn btn-ghost btn-block" onClick={tryDemo} disabled={loading}>
+                        <i className="fas fa-chart-line"></i> Try Admin Demo
+                    </button>
                 </div>
             </div>
         </section>

@@ -1,6 +1,8 @@
 import MenuItem from '../models/MenuItem.js';
 import User from '../models/User.js';
 
+export const DEMO = { email: 'demo@sliceandcrust.com', password: 'demo-view-only' };
+
 export const items = [
     { name: 'Margherita Classic', description: 'San Marzano tomato, fresh mozzarella, basil, olive oil, sea salt — the original.', price: 299, category: 'classic', isVeg: true, isFeatured: true, rating: 4.8, image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=85&auto=format&fit=crop', ingredients: ['Tomato sauce','Fresh mozzarella','Basil','Olive oil'] },
     { name: 'Pepperoni Supreme', description: 'Loaded with premium pepperoni, mozzarella, oregano on a wood-fired crust.', price: 449, category: 'classic', isFeatured: true, rating: 4.9, image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&q=85&auto=format&fit=crop', ingredients: ['Pepperoni','Mozzarella','Tomato sauce','Oregano'] },
@@ -40,5 +42,17 @@ export async function ensureSeed({ resetMenu = false } = {}) {
         console.log(`✓ Admin user created: ${email}`);
     } else if (!admin) {
         console.warn('! No admin user: set ADMIN_EMAIL and ADMIN_PASSWORD to create one');
+    }
+
+    // Public read-only account for the "Try Admin Demo" button. It can view the
+    // dashboard but every write route requires the real admin role.
+    const demoEmail = DEMO.email;
+    const demo = await User.findOne({ email: demoEmail });
+    if (!demo) {
+        await User.create({ name: 'Demo Admin', email: demoEmail, password: DEMO.password, role: 'demo' });
+        console.log(`✓ Demo (read-only) user created: ${demoEmail}`);
+    } else if (demo.role !== 'demo') {
+        demo.role = 'demo';
+        await demo.save();
     }
 }

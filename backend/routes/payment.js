@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import Razorpay from 'razorpay';
 import Order from '../models/Order.js';
+import { notifyStaff } from '../lib/privacy.js';
 
 const router = express.Router();
 
@@ -72,7 +73,7 @@ router.post('/verify', async (req, res) => {
         );
         if (!order) return res.status(404).json({ message: 'Order not found', verified: false });
 
-        req.app.get('io')?.to('admin').emit('order-updated', order);
+        notifyStaff(req.app.get('io'), 'order-updated', order);
         res.json({ verified: true, orderId: order._id });
     } catch (err) {
         res.status(500).json({ message: err.message });

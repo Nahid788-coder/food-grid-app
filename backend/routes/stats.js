@@ -2,11 +2,11 @@ import express from 'express';
 import Order from '../models/Order.js';
 import Booking from '../models/Booking.js';
 import MenuItem from '../models/MenuItem.js';
-import { protect, adminOnly } from '../middleware/auth.js';
+import { protect, staffRead } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', protect, adminOnly, async (_req, res) => {
+router.get('/', protect, staffRead, async (_req, res) => {
     try {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

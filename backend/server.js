@@ -84,6 +84,7 @@ io.on('connection', (socket) => {
         try {
             const { role } = jwt.verify(String(token || ''), process.env.JWT_SECRET);
             if (role === 'admin') socket.join('admin');
+            else if (role === 'demo') socket.join('demo'); // receives masked copies only
         } catch {
             /* ignore */
         }

@@ -1,6 +1,7 @@
 import express from 'express';
 import Booking from '../models/Booking.js';
-import { protect, adminOnly, optionalAuth } from '../middleware/auth.js';
+import { protect, adminOnly, optionalAuth, staffRead } from '../middleware/auth.js';
+import { maskBooking } from '../lib/privacy.js';
 
 const router = express.Router();
 
@@ -26,11 +27,11 @@ router.post('/', optionalAuth, async (req, res) => {
     }
 });
 
-router.get('/', protect, adminOnly, async (req, res) => {
+router.get('/', protect, staffRead, async (req, res) => {
     const { status } = req.query;
     const filter = status ? { status } : {};
-    const bookings = await Booking.find(filter).sort('-createdAt');
-    res.json(bookings);
+    const bookings = await Booking.find(filter).sort('-createdAt').limit(500).lean();
+    res.json(req.user.role === 'demo' ? bookings.map(maskBooking) : bookings);
 });
 
 router.put('/:id/status', protect, adminOnly, async (req, res) => {
