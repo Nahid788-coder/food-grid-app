@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/axios';
+import { getMenu, cachedMenu } from '../api/menuCache';
 import MenuCard from '../components/MenuCard.jsx';
 import MenuSkeleton from '../components/MenuSkeleton.jsx';
 
@@ -16,33 +16,32 @@ const FILTERS = [
 ];
 
 export default function Menu() {
-    const [items, setItems] = useState([]);
+    // One request for the whole menu; category filters and search run in the browser.
+    const [items, setItems] = useState(() => cachedMenu() || []);
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => !cachedMenu());
+    const [failed, setFailed] = useState(false);
 
     useEffect(() => {
-        const ctrl = new AbortController();
-        setLoading(true);
-        api.get(`/menu${filter !== 'all' ? `?category=${filter}` : ''}`, { signal: ctrl.signal })
-            .then((r) => { setItems(r.data); setLoading(false); })
-            .catch((err) => {
-                if (err.code === 'ERR_CANCELED') return;
-                setItems([]);
-                setLoading(false);
-            });
-        return () => ctrl.abort();
-    }, [filter]);
+        let alive = true;
+        getMenu()
+            .then((data) => alive && setItems(data))
+            .catch(() => alive && setFailed(true))
+            .finally(() => alive && setLoading(false));
+        return () => { alive = false; };
+    }, []);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return items;
         return items.filter((i) =>
-            i.name.toLowerCase().includes(q) ||
-            i.description.toLowerCase().includes(q) ||
-            i.ingredients?.some((x) => x.toLowerCase().includes(q))
+            (filter === 'all' || i.category === filter) &&
+            (!q ||
+                i.name.toLowerCase().includes(q) ||
+                i.description.toLowerCase().includes(q) ||
+                i.ingredients?.some((x) => x.toLowerCase().includes(q)))
         );
-    }, [items, search]);
+    }, [items, filter, search]);
 
     return (
         <>
@@ -93,10 +92,10 @@ export default function Menu() {
                         <div style={{ textAlign: 'center', padding: 80, color: 'var(--text-muted)' }}>
                             <i className="fas fa-utensils" style={{ fontSize: 48, marginBottom: 16, color: 'var(--text-dim)' }}></i>
                             <p style={{ fontSize: 18, fontWeight: 600 }}>
-                                {search ? 'No matches found' : 'No items in this category'}
+                                {failed ? 'Could not load the menu' : search ? 'No matches found' : 'No items in this category'}
                             </p>
                             <span style={{ fontSize: 15 }}>
-                                {search ? 'Try a different search term.' : 'Try a different category, or start the backend & run seed.'}
+                                {failed ? 'Please check your connection and refresh the page.' : search ? 'Try a different search term.' : 'Try a different category.'}
                             </span>
                         </div>
                     ) : (

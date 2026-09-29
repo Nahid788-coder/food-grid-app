@@ -44,6 +44,7 @@ export default function OrderTrack() {
         return () => {
             socket.off('connect', subscribe);
             socket.off('order-status-update', onUpdate);
+            socket.disconnect(); // only this page uses the live connection
         };
     }, [id]);
 

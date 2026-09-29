@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api from '../api/axios';
+import { getMenu, cachedMenu } from '../api/menuCache';
 import Reveal, { fadeUp, stagger } from '../components/Reveal.jsx';
 import MenuCard from '../components/MenuCard.jsx';
 
@@ -23,15 +23,18 @@ function AnimatedCounter({ target, suffix = '+' }) {
     return <>{val.toLocaleString()}{suffix}</>;
 }
 
+const featuredOf = (menu) => menu.filter((m) => m.isFeatured).slice(0, 6);
+
 export default function Home() {
-    const [popular, setPopular] = useState([]);
+    // Shares the menu request with the Menu page (see api/menuCache.js).
+    const [popular, setPopular] = useState(() => featuredOf(cachedMenu() || []));
 
     useEffect(() => {
-        const ctrl = new AbortController();
-        api.get('/menu?featured=true', { signal: ctrl.signal })
-            .then((r) => setPopular(r.data.slice(0, 6)))
-            .catch(() => { /* aborted or failed */ });
-        return () => ctrl.abort();
+        let alive = true;
+        getMenu()
+            .then((data) => alive && setPopular(featuredOf(data)))
+            .catch(() => { /* the section stays empty */ });
+        return () => { alive = false; };
     }, []);
 
     return (

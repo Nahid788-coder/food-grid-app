@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -6,6 +6,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { socket } from '../api/socket';
+import { getMenu, clearMenuCache } from '../api/menuCache';
 import MenuItemForm from '../components/MenuItemForm.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -29,12 +30,19 @@ export default function Admin() {
     const [menu, setMenu] = useState([]);
     const [editingItem, setEditingItem] = useState(undefined);
 
-    const refreshStats = useCallback(async () => {
-        try {
-            const { data } = await api.get('/stats');
-            setStats(data);
-        } catch { /* silent */ }
+    // A status change reaches us twice (our own PUT reply and the socket echo), and a rush of
+    // new orders can arrive together. Batch those into a single /stats request.
+    const statsTimer = useRef(null);
+    const refreshStats = useCallback(() => {
+        clearTimeout(statsTimer.current);
+        statsTimer.current = setTimeout(async () => {
+            try {
+                const { data } = await api.get('/stats');
+                setStats(data);
+            } catch { /* silent */ }
+        }, 500);
     }, []);
+    useEffect(() => () => clearTimeout(statsTimer.current), []);
 
     useEffect(() => {
         const ctrl = new AbortController();
@@ -43,16 +51,17 @@ export default function Admin() {
             api.get('/stats', opts),
             api.get('/orders', opts),
             api.get('/bookings', opts),
-            api.get('/menu', opts),
+            getMenu({ fresh: true }),
         ])
             .then(([s, o, b, m]) => {
+                if (ctrl.signal.aborted) return;
                 setStats(s.data);
                 setOrders(o.data);
                 setBookings(b.data);
-                setMenu(m.data);
+                setMenu(m);
             })
             .catch((err) => {
-                if (err.code === 'ERR_CANCELED') return;
+                if (err.code === 'ERR_CANCELED' || ctrl.signal.aborted) return;
                 toast.error('Failed to load admin data');
             });
         return () => ctrl.abort();
@@ -78,6 +87,7 @@ export default function Admin() {
             socket.off('connect', join);
             socket.off('new-order', onNew);
             socket.off('order-updated', onUpd);
+            socket.disconnect(); // only this page uses the live connection
         };
     }, [refreshStats]);
 
@@ -106,6 +116,7 @@ export default function Admin() {
         if (!confirm('Delete this item?')) return;
         try {
             await api.delete(`/menu/${id}`);
+            clearMenuCache();
             setMenu((prev) => prev.filter((m) => m._id !== id));
             toast.success('Deleted');
         } catch (err) {
@@ -116,6 +127,7 @@ export default function Admin() {
     const onItemSaved = (saved) => {
         setEditingItem(undefined);
         if (saved) {
+            clearMenuCache();
             setMenu((prev) => {
                 const idx = prev.findIndex((m) => m._id === saved._id);
                 if (idx >= 0) {

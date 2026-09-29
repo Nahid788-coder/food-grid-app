@@ -7,6 +7,20 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Reveal from '../components/Reveal.jsx';
 import PhoneInput from '../components/PhoneInput.jsx';
 
+// The Razorpay public key never changes while the app is open, so it is asked for
+// once and the same answer is reused (including when the customer clicks Pay).
+let paymentKeyRequest = null;
+function loadPaymentKey() {
+    paymentKeyRequest ??= api
+        .get('/payment/key')
+        .then(({ data }) => data)
+        .catch(() => {
+            paymentKeyRequest = null; // try again next time
+            return { configured: false, key: null };
+        });
+    return paymentKeyRequest;
+}
+
 const loadRazorpayScript = () =>
     new Promise((resolve) => {
         if (window.Razorpay) return resolve(true);
@@ -40,9 +54,9 @@ export default function Checkout() {
     // Online payment is only offered when the server has Razorpay keys.
     const [onlineReady, setOnlineReady] = useState(null);
     useEffect(() => {
-        api.get('/payment/key')
-            .then(({ data }) => setOnlineReady(Boolean(data.configured)))
-            .catch(() => setOnlineReady(false));
+        let alive = true;
+        loadPaymentKey().then((data) => alive && setOnlineReady(Boolean(data.configured)));
+        return () => { alive = false; };
     }, []);
 
     const placeOrderInDB = async () => {
@@ -60,7 +74,7 @@ export default function Checkout() {
         const ok = await loadRazorpayScript();
         if (!ok) return toast.error('Razorpay SDK failed to load');
 
-        const { data: keyData } = await api.get('/payment/key');
+        const keyData = await loadPaymentKey();
         if (!keyData.configured) {
             toast.error('Online payment is not available right now. Please choose Cash on Delivery.');
             return null;
