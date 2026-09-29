@@ -4,7 +4,14 @@ import api from '../api/axios';
 import Reveal from '../components/Reveal.jsx';
 import PhoneInput from '../components/PhoneInput.jsx';
 
+// Local date as YYYY-MM-DD, so today stays selectable in every timezone.
+const localToday = () => {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+
 export default function Booking() {
+    const [today] = useState(localToday);
     const [form, setForm] = useState({
         name: '', phone: '', email: '', date: '', time: '', guests: 2, note: '',
     });
@@ -73,7 +80,7 @@ export default function Booking() {
                             <div className="form-row three">
                                 <div className="form-field">
                                     <label>Date *</label>
-                                    <input name="date" type="date" value={form.date} onChange={onChange} required />
+                                    <input name="date" type="date" value={form.date} onChange={onChange} min={today} required />
                                 </div>
                                 <div className="form-field">
                                     <label>Time *</label>

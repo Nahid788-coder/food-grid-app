@@ -1,9 +1,16 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 
 export default function CartDrawer() {
     const { items, removeItem, updateQty, subtotal, count, open, setOpen } = useCart();
     const navigate = useNavigate();
+    const { pathname } = useLocation();
+
+    // Close the drawer whenever the page changes.
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname, setOpen]);
 
     const checkout = () => {
         setOpen(false);
@@ -16,7 +23,7 @@ export default function CartDrawer() {
             <aside className={`cart-drawer ${open ? 'open' : ''}`}>
                 <div className="cart-head">
                     <h3>Your Cart <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({count})</span></h3>
-                    <button className="cart-close" onClick={() => setOpen(false)}>
+                    <button className="cart-close" onClick={() => setOpen(false)} aria-label="Close cart">
                         <i className="fas fa-xmark"></i>
                     </button>
                 </div>

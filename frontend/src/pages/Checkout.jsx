@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -37,6 +37,14 @@ export default function Checkout() {
 
     const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
+    // Online payment is only offered when the server has Razorpay keys.
+    const [onlineReady, setOnlineReady] = useState(null);
+    useEffect(() => {
+        api.get('/payment/key')
+            .then(({ data }) => setOnlineReady(Boolean(data.configured)))
+            .catch(() => setOnlineReady(false));
+    }, []);
+
     const placeOrderInDB = async () => {
         // Only ids and quantities are sent; the server works out every price.
         const { data } = await api.post('/orders', {
@@ -54,7 +62,7 @@ export default function Checkout() {
 
         const { data: keyData } = await api.get('/payment/key');
         if (!keyData.configured) {
-            toast.error('Payment not configured. Add RAZORPAY_KEY_ID in backend/.env');
+            toast.error('Online payment is not available right now. Please choose Cash on Delivery.');
             return null;
         }
 
@@ -184,20 +192,28 @@ export default function Checkout() {
                                     { v: 'upi', l: 'UPI', i: 'fas fa-mobile-screen' },
                                     { v: 'card', l: 'Credit / Debit Card', i: 'fas fa-credit-card' },
                                     { v: 'netbanking', l: 'Net Banking', i: 'fas fa-building-columns' },
-                                ].map((p) => (
-                                    <label key={p.v} style={{
+                                ].map((p) => {
+                                    const off = p.v !== 'cod' && onlineReady === false;
+                                    return (
+                                    <label key={p.v} title={off ? 'Online payment is not enabled on this demo' : undefined} style={{
                                         padding: '14px 16px', display: 'flex', alignItems: 'center',
-                                        gap: 10, cursor: 'pointer',
+                                        gap: 10, cursor: off ? 'not-allowed' : 'pointer', opacity: off ? 0.5 : 1,
                                         border: `1.5px solid ${form.paymentMethod === p.v ? 'var(--primary)' : 'var(--border)'}`,
                                         borderRadius: 'var(--radius)',
                                         background: form.paymentMethod === p.v ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg)',
                                         fontWeight: 500, fontSize: 15, transition: 'all 0.2s',
                                     }}>
-                                        <input type="radio" name="paymentMethod" value={p.v} checked={form.paymentMethod === p.v} onChange={onChange} style={{ width: 'auto' }} />
+                                        <input type="radio" name="paymentMethod" value={p.v} checked={form.paymentMethod === p.v} onChange={onChange} disabled={off} style={{ width: 'auto' }} />
                                         <i className={p.i} style={{ color: 'var(--primary)' }}></i> {p.l}
                                     </label>
-                                ))}
+                                    );
+                                })}
                             </div>
+                            {onlineReady === false && (
+                                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '-4px 0 14px' }}>
+                                    <i className="fas fa-circle-info"></i> Online payment (Razorpay) is switched off on this demo, so orders use Cash on Delivery.
+                                </p>
+                            )}
 
                             {/* Payment-specific info card */}
                             <div style={{

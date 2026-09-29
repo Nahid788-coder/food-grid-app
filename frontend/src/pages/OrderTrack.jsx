@@ -120,6 +120,9 @@ export default function OrderTrack() {
                                 <img src={it.image} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontWeight: 600, fontSize: 15 }}>{it.name}</div>
+                                    {it.category === 'custom' && it.description && (
+                                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{it.description}</div>
+                                    )}
                                     <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Qty: {it.quantity}</div>
                                 </div>
                                 <strong>₹{it.price * it.quantity}</strong>
